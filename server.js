@@ -48,3 +48,16 @@ app.post("/api/users", function (req, res) {
     }
   });
 });
+app.get("/api/users", function (req, res) {
+  console.log("Invoking Users List");
+  const allUsers = user.find(function (err, data) {
+    if (err) {
+      console.log("Error while fetching All Users " + allUsers);
+      res.json(err);
+    }
+    else {
+      console.log("All Users " + JSON.stringify(data));
+      res.json(data);
+    }
+  });
+});

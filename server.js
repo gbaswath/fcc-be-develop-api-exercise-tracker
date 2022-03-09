@@ -84,7 +84,7 @@ console.log("Created Exercise Schema " + circularJSON.stringify(exerciseSchema))
 app.param("_id", function (req, res, next, _id) {
   const userID = _id;
   req._id = userID;
-  console.log("Got User ID " + userID);
+  console.log("[Middleware] Got User ID " + userID);
   next();
 });
 
@@ -151,10 +151,60 @@ function saveExercise(exercise, user, res) {
         "description": exercise.description,
         "duration": exercise.duration,
         "date": exercise.date.toDateString(),
-        "_id": exercise._id
+        "_id": user._id
       };
       console.log("Prepared Response " + JSON.stringify(result));
       res.json(result);
     }
   });
+}
+
+//Fetch All Exercise for User
+app.get("/api/users/:_id/logs", function (req, res) {
+  console.log("Got User ID " + req._id);
+  user.findById(req._id, function (err, data) {
+    if (err) {
+      console.log("Error while retrieving ID " + req._id);
+      res.json(err);
+    } else {
+      const user = data;
+      console.log("Got User " + data);
+      fetchExerciseLog(req, res, user);
+    }
+  });
+});
+
+//Fetch Exercise Logs for Given User
+function fetchExerciseLog(req, res, user) {
+  Exercise.find({ userID: req._id }, function (err, data) {
+    if (err) {
+      console.log("Error while Fetching Exercise " + err);
+      res.json(err);
+    } else {
+      let logs = getExerciseLogs(data);
+      let result = {
+        "username": user.username,
+        "count": data.length,
+        "_id": user._id,
+        "log": logs
+      };
+      console.log("Prepared Result " + JSON.stringify(result));
+      res.json(result);
+    }
+  });
+}
+
+//Prepare Exercise Logs
+function getExerciseLogs(data) {
+  let logs = [];
+  data.forEach(function (exercise) {
+    let log = {
+      "description": exercise.description,
+      "duration": exercise.duration,
+      "date": exercise.date.toDateString(),
+    };
+    logs.push(log);
+  });
+  console.log("Fetched All Exercises " + logs);
+  return logs;
 }

@@ -162,6 +162,12 @@ function saveExercise(exercise, user, res) {
 //Fetch All Exercise for User
 app.get("/api/users/:_id/logs", function (req, res) {
   console.log("Got User ID " + req._id);
+  const fromDate = req.query.from;
+  console.log("Got From Date " + fromDate);
+  const toDate = req.query.to;
+  console.log("Got To Date " + toDate);
+  const limit = req.query.limit;
+  console.log("Got Result Limit " + limit);
   user.findById(req._id, function (err, data) {
     if (err) {
       console.log("Error while retrieving ID " + req._id);
@@ -169,19 +175,20 @@ app.get("/api/users/:_id/logs", function (req, res) {
     } else {
       const user = data;
       console.log("Got User " + data);
-      fetchExerciseLog(req, res, user);
+      fetchExerciseLog(req, res, user, fromDate, toDate, limit);
     }
   });
 });
 
 //Fetch Exercise Logs for Given User
-function fetchExerciseLog(req, res, user) {
-  Exercise.find({ userID: req._id }, function (err, data) {
+function fetchExerciseLog(req, res, user, fromDate, toDate, limit) {
+  let filterParams = filterParams(req, fromDate, toDate);
+  Exercise.find(filterParams, function (err, data) {
     if (err) {
       console.log("Error while Fetching Exercise " + err);
       res.json(err);
     } else {
-      let logs = getExerciseLogs(data);
+      let logs = getExerciseLogs(data, limit);
       let result = {
         "username": user.username,
         "count": data.length,
@@ -194,17 +201,40 @@ function fetchExerciseLog(req, res, user) {
   });
 }
 
+//Create Filter Query Based on Date & User ID
+function filterParams(req, fromDate, toDate) {
+  let filterParams = { "userID": req._id };
+  if (fromDate != null && fromDate != undefined) {
+    if (toDate != null && toDate != undefined)
+      filterParams = { "userID": req._id, "date": { $gte: fromDate, $lte: toDate } };
+
+    else
+      filterParams = { "userID": req._id, "date": { $gte: fromDate } };
+  }
+  console.log("Filter Params " + JSON.stringify(filterParams));
+  return filterParams;
+}
+
 //Prepare Exercise Logs
-function getExerciseLogs(data) {
+function getExerciseLogs(data, limit) {
   let logs = [];
+  let count = 0;
+  let isLimitApplied = false;
+  if (limit != null && limit > 0)
+    isLimitApplied = true;
   data.forEach(function (exercise) {
+    if (isLimitApplied && count >= limit) {
+      console.log("Limit Reached " + limit);
+      return;
+    }
     let log = {
       "description": exercise.description,
       "duration": exercise.duration,
       "date": exercise.date.toDateString(),
     };
     logs.push(log);
+    count++;
   });
-  console.log("Fetched All Exercises " + logs);
+  console.log("Fetched All Exercises " + JSON.stringify(logs));
   return logs;
 }

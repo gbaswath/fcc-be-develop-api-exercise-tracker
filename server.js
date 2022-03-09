@@ -182,7 +182,7 @@ app.get("/api/users/:_id/logs", function (req, res) {
 
 //Fetch Exercise Logs for Given User
 function fetchExerciseLog(req, res, user, fromDate, toDate, limit) {
-  let filterParams = filterParams(req, fromDate, toDate);
+  let filterParams = getFilterParams(req, fromDate, toDate);
   Exercise.find(filterParams, function (err, data) {
     if (err) {
       console.log("Error while Fetching Exercise " + err);
@@ -202,7 +202,7 @@ function fetchExerciseLog(req, res, user, fromDate, toDate, limit) {
 }
 
 //Create Filter Query Based on Date & User ID
-function filterParams(req, fromDate, toDate) {
+function getFilterParams(req, fromDate, toDate) {
   let filterParams = { "userID": req._id };
   if (fromDate != null && fromDate != undefined) {
     if (toDate != null && toDate != undefined)
